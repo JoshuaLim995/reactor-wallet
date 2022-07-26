@@ -49,7 +49,7 @@ packages:
       name: borsh_annotation
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.2.0+1"
+    version: "0.3.1+1"
   cached_network_image:
     dependency: "direct main"
     description:
@@ -127,6 +127,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.0.5"
+  decimal:
+    dependency: transitive
+    description:
+      name: decimal
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.2.0"
   desktop_window:
     dependency: "direct main"
     description:
@@ -267,7 +274,7 @@ packages:
       name: freezed_annotation
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.14.3"
+    version: "2.1.0"
   google_fonts:
     dependency: "direct main"
     description:
@@ -522,6 +529,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "4.0.0"
+  rational:
+    dependency: transitive
+    description:
+      name: rational
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.2.0"
   riverpod:
     dependency: transitive
     description:
@@ -553,10 +567,10 @@ packages:
     description:
       path: "packages/solana"
       ref: HEAD
-      resolved-ref: e3e4df3eae721fe01889b38ece633d63e21c1024
-      url: "https://github.com/marc2332/cryptoplease-dart"
+      resolved-ref: "1aa62db88faddea6422ce3101eca0d68e95e8fb4"
+      url: "https://github.com/cryptoplease/cryptoplease-dart"
     source: git
-    version: "0.18.0"
+    version: "0.25.0"
   source_span:
     dependency: transitive
     description:

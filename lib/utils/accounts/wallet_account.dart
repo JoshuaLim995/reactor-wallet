@@ -3,9 +3,12 @@ import 'package:solana/encoder.dart';
 import 'package:solana/solana.dart'
     show
         Ed25519HDKeyPair,
+        Ed25519HDPublicKey,
         RpcClientExt,
         SolanaClient,
+        SolanaClientAssociatedTokenAccontProgram,
         SystemInstruction,
+        TokenInstruction,
         TokenProgram,
         Wallet,
         lamportsPerSol;
@@ -57,20 +60,21 @@ class WalletAccount extends BaseAccount implements Account {
    * Send SOLs to an adress
    */
   Future<String> sendLamportsTo(
-    String destinationAddress,
+    String fundingAccount,
+    String recipientAccount,
     int amount, {
     List<String> references = const [],
   }) async {
     final instruction = SystemInstruction.transfer(
-      source: address,
-      destination: destinationAddress,
       lamports: amount,
+      fundingAccount: Ed25519HDPublicKey.fromBase58(fundingAccount),
+      recipientAccount: Ed25519HDPublicKey.fromBase58(recipientAccount),
     );
 
     for (final reference in references) {
       instruction.accounts.add(
         AccountMeta(
-          pubKey: reference,
+          pubKey: Ed25519HDPublicKey.fromBase58(reference),
           isWriteable: false,
           isSigner: false,
         ),
@@ -81,7 +85,8 @@ class WalletAccount extends BaseAccount implements Account {
       instructions: [instruction],
     );
 
-    final signature = await client.rpcClient.signAndSendTransaction(message, [wallet]);
+    final signature =
+        await client.rpcClient.signAndSendTransaction(message, [wallet]);
 
     return signature;
   }
@@ -96,33 +101,35 @@ class WalletAccount extends BaseAccount implements Account {
     List<String> references = const [],
   }) async {
     final associatedRecipientAccount = await client.getAssociatedTokenAccount(
-      owner: destinationAddress,
-      mint: tokenMint,
+      owner: Ed25519HDPublicKey.fromBase58(destinationAddress),
+      mint: Ed25519HDPublicKey.fromBase58(tokenMint),
     );
 
     final associatedSenderAccount = await client.getAssociatedTokenAccount(
-      owner: address,
-      mint: tokenMint,
+      owner: Ed25519HDPublicKey.fromBase58(address),
+      mint: Ed25519HDPublicKey.fromBase58(tokenMint),
     ) as ProgramAccount;
 
-    final message = TokenProgram.transfer(
-      source: associatedSenderAccount.pubkey,
-      destination: associatedRecipientAccount!.pubkey,
+    final instructions = TokenInstruction.transfer(
+      source: Ed25519HDPublicKey.fromBase58(associatedSenderAccount.pubkey),
+      destination:
+          Ed25519HDPublicKey.fromBase58(associatedRecipientAccount!.pubkey),
       amount: amount,
-      owner: address,
+      owner: Ed25519HDPublicKey.fromBase58(address),
     );
 
     for (final reference in references) {
-      message.instructions.first.accounts.add(
+      instructions.accounts.add(
         AccountMeta(
-          pubKey: reference,
+          pubKey: Ed25519HDPublicKey.fromBase58(reference),
           isWriteable: false,
           isSigner: false,
         ),
       );
     }
 
-    final signature = await client.rpcClient.signAndSendTransaction(message, [wallet]);
+    final signature = await client.rpcClient.signAndSendTransaction(
+        Message(instructions: [instructions]), [wallet]);
 
     return signature;
   }
@@ -133,6 +140,7 @@ class WalletAccount extends BaseAccount implements Account {
       int lamports = (transaction.ammount * lamportsPerSol).toInt();
 
       return sendLamportsTo(
+        transaction.origin,
         transaction.destination,
         lamports,
         references: transaction.references,
@@ -157,7 +165,8 @@ class WalletAccount extends BaseAccount implements Account {
    * Create the keys pair in Isolate to prevent blocking the main thread
    */
   static Future<Ed25519HDKeyPair> createKeyPair(String mnemonic) async {
-    final Ed25519HDKeyPair keyPair = await Ed25519HDKeyPair.fromMnemonic(mnemonic);
+    final Ed25519HDKeyPair keyPair =
+        await Ed25519HDKeyPair.fromMnemonic(mnemonic);
     return keyPair;
   }
 
@@ -176,7 +185,8 @@ class WalletAccount extends BaseAccount implements Account {
   /*
    * Create a WalletAccount with a random mnemonic
    */
-  static Future<WalletAccount> generate(String name, NetworkUrl url, tokensTracker) async {
+  static Future<WalletAccount> generate(
+      String name, NetworkUrl url, tokensTracker) async {
     final String randomMnemonic = bip39.generateMnemonic();
 
     WalletAccount account = WalletAccount(

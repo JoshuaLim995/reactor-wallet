@@ -9,7 +9,12 @@ import 'package:reactor_wallet/utils/state/providers.dart';
 
 import 'package:solana/dto.dart' show Commitment;
 import 'package:solana/dto.dart' as dto;
-import 'package:solana/solana.dart' show Ed25519HDKeyPair, SubscriptionClient;
+import 'package:solana/solana.dart'
+    show
+        Ed25519HDKeyPair,
+        Ed25519HDPublicKey,
+        SolanaClientAssociatedTokenAccontProgram,
+        SubscriptionClient;
 
 class ResponsiveRotator extends StatelessWidget {
   final List<Widget> children;
@@ -81,7 +86,9 @@ Future<void> createQRTransaction(BuildContext context, Account account) async {
             transactionData.value = TransactionSolanaPay(
               recipient: account.address,
               amount: sendAmount,
-              splToken: selectedToken.value.info.symbol != "SOL" ? selectedToken.value.mint : null,
+              splToken: selectedToken.value.info.symbol != "SOL"
+                  ? selectedToken.value.mint
+                  : null,
               references: [transactionIdentifier.address],
             );
 
@@ -95,9 +102,10 @@ Future<void> createQRTransaction(BuildContext context, Account account) async {
                 commitment: Commitment.confirmed,
               );
             } else {
-              final programAccount = await account.client.getAssociatedTokenAccount(
-                owner: account.address,
-                mint: selectedToken.value.mint,
+              final programAccount =
+                  await account.client.getAssociatedTokenAccount(
+                owner: Ed25519HDPublicKey.fromBase58(account.address),
+                mint: Ed25519HDPublicKey.fromBase58(selectedToken.value.mint),
               );
 
               stream = client.accountSubscribe(
@@ -107,7 +115,8 @@ Future<void> createQRTransaction(BuildContext context, Account account) async {
             }
 
             stream.forEach((newAccount) async {
-              final sigs = await account.client.rpcClient.getSignaturesForAddress(
+              final sigs =
+                  await account.client.rpcClient.getSignaturesForAddress(
                 transactionIdentifier.address,
                 commitment: Commitment.confirmed,
               );
@@ -137,7 +146,8 @@ Future<void> createQRTransaction(BuildContext context, Account account) async {
             // Remove the last character
             if (n == "D") {
               if (currentValue.isNotEmpty) {
-                amount.value = amount.value.substring(0, currentValue.length - 1);
+                amount.value =
+                    amount.value.substring(0, currentValue.length - 1);
               }
               return;
             }
@@ -211,7 +221,8 @@ Future<void> createQRTransaction(BuildContext context, Account account) async {
                             ],
                             Padding(
                               padding: screenSize.width > 700
-                                  ? const EdgeInsets.only(left: 25, right: 25, top: 15)
+                                  ? const EdgeInsets.only(
+                                      left: 25, right: 25, top: 15)
                                   : EdgeInsets.zero,
                               child: SizedBox(
                                 height: screenSize.width > 700 ? 225 : 150,
@@ -239,7 +250,8 @@ Future<void> createQRTransaction(BuildContext context, Account account) async {
                                       ? [
                                           const Padding(
                                             padding: EdgeInsets.only(right: 7),
-                                            child: Icon(Icons.error_outline_outlined),
+                                            child: Icon(
+                                                Icons.error_outline_outlined),
                                           ),
                                           Text(errorMessage.value.toString())
                                         ]

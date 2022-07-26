@@ -113,12 +113,14 @@ class BaseAccount {
    * Refresh the account balance
    */
   Future<void> refreshBalance() async {
-    int balance = await client.rpcClient.getBalance(address, commitment: Commitment.confirmed);
+    int balance = await client.rpcClient
+        .getBalance(address, commitment: Commitment.confirmed);
 
     this.balance = balance.toDouble() / lamportsPerSol;
     itemsLoaded[AccountItem.solBalance] = true;
 
-    usdBalance = this.balance * tokensTracker.getTokenValue(SystemProgram.programId);
+    usdBalance =
+        this.balance * tokensTracker.getTokenValue(SystemProgram.programId);
 
     itemsLoaded[AccountItem.usdBalance] = true;
 
@@ -160,7 +162,8 @@ class BaseAccount {
 
     tokenAccounts.asMap().forEach(
       (index, tokenAccount) {
-        ParsedAccountData? data = tokenAccount.account.data as ParsedAccountData?;
+        ParsedAccountData? data =
+            tokenAccount.account.data as ParsedAccountData?;
 
         if (data != null) {
           data.when(
@@ -186,19 +189,26 @@ class BaseAccount {
                     );
 
                     // Add the token to this account
-                    client.rpcClient.getMetadata(mint: tokenMint).then(
+                    client.rpcClient
+                        .getMetadata(
+                            mint: Ed25519HDPublicKey.fromBase58(tokenMint))
+                        .then(
                       (value) async {
                         try {
-                          ImageInfo imageInfo = await getImageFromUri(value!.uri) as ImageInfo;
+                          ImageInfo imageInfo =
+                              await getImageFromUri(value!.uri) as ImageInfo;
                           if (balance > 0) {
-                            tokens[tokenMint] = NFT(balance, tokenMint, tokenInfo, imageInfo);
+                            tokens[tokenMint] =
+                                NFT(balance, tokenMint, tokenInfo, imageInfo);
                           } else {
                             notOwnedNFTs++;
                           }
                         } catch (_) {
-                          tokens[tokenMint] = Token(balance, tokenMint, tokenInfo);
+                          tokens[tokenMint] =
+                              Token(balance, tokenMint, tokenInfo);
                         } finally {
-                          if (tokens.length + notOwnedNFTs == tokenAccounts.length) {
+                          if (tokens.length + notOwnedNFTs ==
+                              tokenAccounts.length) {
                             itemsLoaded[AccountItem.tokens] = true;
                             try {
                               completer.complete();
@@ -234,7 +244,7 @@ class BaseAccount {
 
     try {
       final response = await client.rpcClient.getTransactionsList(
-        address,
+        Ed25519HDPublicKey.fromBase58(address),
         commitment: Commitment.confirmed,
       );
 
@@ -249,7 +259,8 @@ class BaseAccount {
                   transfer: (data) {
                     ParsedSystemTransferInformation transfer = data.info;
                     bool receivedOrNot = transfer.destination == address;
-                    double ammount = transfer.lamports.toDouble() / lamportsPerSol;
+                    double ammount =
+                        transfer.lamports.toDouble() / lamportsPerSol;
 
                     transactions.add(
                       TransactionDetails(
